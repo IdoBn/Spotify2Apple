@@ -1,26 +1,29 @@
 import os
-import urllib
+import urllib.parse
 import requests
 import itertools
 
 TOKEN = os.environ["SPOTIFY_TOKEN"]
 
+
 class NotSpotifyException(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
+
 
 class UnhandledSpotifyEntity(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
+
 def _spotify_podcast_to_apple_podcast(identifier: str) -> str:
     res_spotify = requests.get(
         f"https://api.spotify.com/v1/episodes/{identifier}",
         headers={
-            "Accept": "application/json", 
-            "Content-Type": "application/json", 
-            "Authorization": f"Bearer {TOKEN}"
-        }
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {TOKEN}",
+        },
     )
 
     search_term = f"{res_spotify.json()['show']['name']}+{res_spotify.json()['name']}"
@@ -35,25 +38,27 @@ def _spotify_song_to_apple_song(identifier: str) -> str:
     res_spotify = requests.get(
         f"https://api.spotify.com/v1/tracks/{identifier}",
         headers={
-            "Accept": "application/json", 
-            "Content-Type": "application/json", 
-            "Authorization": f"Bearer {TOKEN}"
-        }
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {TOKEN}",
+        },
     )
 
-    search_term = "+".join([
-        res_spotify.json()["name"],
-        res_spotify.json()["album"]["name"],
-        *itertools.chain([
-            artist["name"] 
-            for artist in res_spotify.json()["album"]["artists"]
-        ])
-    ])
+    search_term = "+".join(
+        [
+            res_spotify.json()["name"],
+            res_spotify.json()["album"]["name"],
+            *itertools.chain(
+                [artist["name"] for artist in res_spotify.json()["album"]["artists"]]
+            ),
+        ]
+    )
     res = requests.get(
         f"https://itunes.apple.com/search?media=music&limit=1&term={search_term}"
     )
 
     return res.json()["results"][0]["trackViewUrl"]
+
 
 def spotify_to_apple(url: str) -> str:
     parsed_url = urllib.parse.urlparse(url)
