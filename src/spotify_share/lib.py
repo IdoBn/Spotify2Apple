@@ -9,19 +9,11 @@ class NotSpotifyException(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
-class NotSpotifyPodcastException(Exception):
+class UnhandledSpotifyEntity(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
-def spotify_podcast_to_apple_podcast(url: str) -> str:
-    parsed_url = urllib.parse.urlparse(url)
-    if parsed_url.netloc != "open.spotify.com":
-        raise NotSpotifyException(url)
-
-    if not parsed_url.path.startswith("/episode"):
-        raise NotSpotifyPodcastException(url)
-
-    _, _episodes, identifier = parsed_url.path.split("/")
+def _spotify_podcast_to_apple_podcast(identifier: str) -> str:
     res_spotify = requests.get(
         f"https://api.spotify.com/v1/episodes/{identifier}",
         headers={
@@ -39,15 +31,7 @@ def spotify_podcast_to_apple_podcast(url: str) -> str:
     return res.json()["results"][0]["trackViewUrl"]
 
 
-def spotify_song_to_apple_song(url: str) -> str:
-    parsed_url = urllib.parse.urlparse(url)
-    if parsed_url.netloc != "open.spotify.com":
-        raise NotSpotifyException(url)
-
-    if not parsed_url.path.startswith("/track"):
-        raise NotSpotifyPodcastException(url)
-
-    _, _track, identifier = parsed_url.path.split("/")
+def _spotify_song_to_apple_song(identifier: str) -> str:
     res_spotify = requests.get(
         f"https://api.spotify.com/v1/tracks/{identifier}",
         headers={
@@ -65,9 +49,22 @@ def spotify_song_to_apple_song(url: str) -> str:
             for artist in res_spotify.json()["album"]["artists"]
         ])
     ])
-    print(search_term)
     res = requests.get(
         f"https://itunes.apple.com/search?media=music&limit=1&term={search_term}"
     )
 
     return res.json()["results"][0]["trackViewUrl"]
+
+def spotify_to_apple(url: str) -> str:
+    parsed_url = urllib.parse.urlparse(url)
+    if parsed_url.netloc != "open.spotify.com":
+        raise NotSpotifyException(url)
+
+    if parsed_url.path.startswith("/episode"):
+        _, _track, identifier = parsed_url.path.split("/")
+        return _spotify_podcast_to_apple_podcast(identifier)
+    elif parsed_url.path.startswith("/track"):
+        _, _track, identifier = parsed_url.path.split("/")
+        return _spotify_song_to_apple_song(identifier)
+    else:
+        raise UnhandledSpotifyEntity(url)
