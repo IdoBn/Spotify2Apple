@@ -16,6 +16,11 @@ class UnhandledSpotifyEntity(Exception):
         super().__init__(*args)
 
 
+class SpotifyNetworkException(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+
 def _spotify_podcast_to_apple_podcast(identifier: str) -> str:
     res_spotify = requests.get(
         f"https://api.spotify.com/v1/episodes/{identifier}",
@@ -25,6 +30,10 @@ def _spotify_podcast_to_apple_podcast(identifier: str) -> str:
             "Authorization": f"Bearer {TOKEN}",
         },
     )
+
+    if res_spotify.status_code != 200:
+        raise SpotifyNetworkException(res_spotify.status_code)
+
 
     search_term = f"{res_spotify.json()['show']['name']}+{res_spotify.json()['name']}"
     res = requests.get(
@@ -44,6 +53,9 @@ def _spotify_song_to_apple_song(identifier: str) -> str:
         },
     )
 
+    if res_spotify.status_code != 200:
+        raise SpotifyNetworkException(res_spotify.status_code)
+
     search_term = "+".join(
         [
             res_spotify.json()["name"],
@@ -60,6 +72,27 @@ def _spotify_song_to_apple_song(identifier: str) -> str:
     return res.json()["results"][0]["trackViewUrl"]
 
 
+def _spotify_show_to_apple_show(identifier: str) -> str:
+    res_spotify = requests.get(
+        f"https://api.spotify.com/v1/shows/{identifier}",
+        headers={
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {TOKEN}",
+        },
+    )
+
+    if res_spotify.status_code != 200:
+        raise SpotifyNetworkException(res_spotify.status_code)
+
+    search_term = res_spotify.json()['name']
+    res = requests.get(
+        f"https://itunes.apple.com/search?media=podcast&entity=podcast&limit=1&term={search_term}"
+    )
+
+    return res.json()["results"][0]["trackViewUrl"]
+
+
 def spotify_to_apple(url: str) -> str:
     parsed_url = urllib.parse.urlparse(url)
     if parsed_url.netloc != "open.spotify.com":
@@ -71,5 +104,8 @@ def spotify_to_apple(url: str) -> str:
     elif parsed_url.path.startswith("/track"):
         _, _track, identifier = parsed_url.path.split("/")
         return _spotify_song_to_apple_song(identifier)
+    elif parsed_url.path.startswith("/show"):
+        _, _track, identifier = parsed_url.path.split("/")
+        return _spotify_show_to_apple_show(identifier)
     else:
         raise UnhandledSpotifyEntity(url)
