@@ -34,7 +34,6 @@ def _spotify_podcast_to_apple_podcast(identifier: str) -> str:
     if res_spotify.status_code != 200:
         raise SpotifyNetworkException(res_spotify.status_code)
 
-
     search_term = f"{res_spotify.json()['show']['name']}+{res_spotify.json()['name']}"
     res = requests.get(
         f"https://itunes.apple.com/search?media=podcast&entity=podcastEpisode&limit=1&term={search_term}"
@@ -85,7 +84,7 @@ def _spotify_show_to_apple_show(identifier: str) -> str:
     if res_spotify.status_code != 200:
         raise SpotifyNetworkException(res_spotify.status_code)
 
-    search_term = res_spotify.json()['name']
+    search_term = res_spotify.json()["name"]
     res = requests.get(
         f"https://itunes.apple.com/search?media=podcast&entity=podcast&limit=1&term={search_term}"
     )
