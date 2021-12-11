@@ -1,7 +1,7 @@
 import os
 import logging
 
-from lib import (
+from .lib import (
     SpotifyAPI,
     spotify_to_apple,
     NotSpotifyException,
