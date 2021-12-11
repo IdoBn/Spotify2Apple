@@ -22,7 +22,7 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
 
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
 
 
 def start(update: Update, context: CallbackContext) -> None:
@@ -46,10 +46,13 @@ def generate_echo(spotify_api: SpotifyAPI):
             update.message.reply_text(
                 spotify_to_apple(spotify_api, update.message.text)
             )
+            logging.info(f"{update.effective_user.mention_markdown_v2()} translated this song: {update.message.text}")
         except NotSpotifyException as ex:
             update.message.reply_text("You did not provide a spotify URL")
+            logging.info(f"{update.effective_user.mention_markdown_v2()} did not provide a spotify url: {update.message.text}")
         except UnhandledSpotifyEntity as ex:
             update.message.reply_text("Cannot convert this spotify URL")
+            logging.info(f"{update.effective_user.mention_markdown_v2()} could not convert: {update.message.text}")
 
     return echo
 
