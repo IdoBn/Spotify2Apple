@@ -1,20 +1,3 @@
-#!/usr/bin/env python
-# pylint: disable=C0116,W0613
-# This program is dedicated to the public domain under the CC0 license.
-
-"""
-Simple Bot to reply to Telegram messages.
-
-First, a few handler functions are defined. Then, those functions are passed to
-the Dispatcher and registered at their respective places.
-Then, the bot is started and runs until we press Ctrl-C on the command line.
-
-Usage:
-Basic Echobot example, repeats messages.
-Press Ctrl-C on the command line or send a signal to the process to stop the
-bot.
-"""
-
 import os
 import logging
 
@@ -42,8 +25,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-# Define a few command handlers. These usually take the two arguments update and
-# context.
 def start(update: Update, context: CallbackContext) -> None:
     """Send a message when the command /start is issued."""
     user = update.effective_user
@@ -83,12 +64,6 @@ def main() -> None:
 
     # on different commands - answer in Telegram
     dispatcher.add_handler(CommandHandler("start", start))
-    # dispatcher.add_handler(
-    #     MessageHandler(
-    #         Filters.regex(r"http[s]?:\/\/open.spotify.com\/(episode|track)\/.*"),
-    #         echo
-    #     )
-    # )
     dispatcher.add_handler(CommandHandler("help", help_command))
 
     spotify_api = SpotifyAPI(
@@ -98,8 +73,6 @@ def main() -> None:
     )
 
     echo = generate_echo(spotify_api)
-
-    # on non command i.e message - echo the message on Telegram
     dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
 
     # Start the Bot
