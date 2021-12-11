@@ -18,7 +18,12 @@ bot.
 import os
 import logging
 
-from lib import spotify_to_apple, NotSpotifyException, UnhandledSpotifyEntity
+from lib import (
+    SpotifyAPI,
+    spotify_to_apple,
+    NotSpotifyException,
+    UnhandledSpotifyEntity,
+)
 
 from telegram import Update, ForceReply
 from telegram.ext import (
@@ -53,14 +58,19 @@ def help_command(update: Update, context: CallbackContext) -> None:
     update.message.reply_text("Help!")
 
 
-def echo(update: Update, context: CallbackContext) -> None:
-    """Echo the user message."""
-    try:
-        update.message.reply_text(spotify_to_apple(update.message.text))
-    except NotSpotifyException as ex:
-        update.message.reply_text("You did not provide a spotify URL")
-    except UnhandledSpotifyEntity as ex:
-        update.message.reply_text("Cannot convert this spotify URL")
+def generate_echo(spotify_api: SpotifyAPI):
+    def echo(update: Update, context: CallbackContext) -> None:
+        """Echo the user message."""
+        try:
+            update.message.reply_text(
+                spotify_to_apple(spotify_api, update.message.text)
+            )
+        except NotSpotifyException as ex:
+            update.message.reply_text("You did not provide a spotify URL")
+        except UnhandledSpotifyEntity as ex:
+            update.message.reply_text("Cannot convert this spotify URL")
+
+    return echo
 
 
 def main() -> None:
@@ -80,6 +90,14 @@ def main() -> None:
     #     )
     # )
     dispatcher.add_handler(CommandHandler("help", help_command))
+
+    spotify_api = SpotifyAPI(
+        refresh_token=os.environ["SPOTIFY_REFRESH_TOKEN"],
+        client_id=os.environ["SPOTIFY_CLIENT_ID"],
+        client_secret=os.environ["SPOTIFY_CLIENT_SECRET"],
+    )
+
+    echo = generate_echo(spotify_api)
 
     # on non command i.e message - echo the message on Telegram
     dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
