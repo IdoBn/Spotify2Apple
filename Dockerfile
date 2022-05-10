@@ -1,19 +1,21 @@
-FROM python:3.9
+FROM python:3.9-alpine
 
 WORKDIR /app
 
-RUN apt-get update && apt-get upgrade -y
+# RUN apt-get update && apt-get upgrade -y
+RUN apk update
+RUN apk add curl gcc musl-dev libffi-dev
 
-RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | python -
+RUN curl -sSL https://install.python-poetry.org | python -
 
 ENV PATH /root/.local/bin:$PATH
 RUN poetry config virtualenvs.create false
 
-# RUN poetry --help # will be successful
+RUN poetry --help # will be successful
 ADD pyproject.toml poetry.lock /app/
 
 RUN poetry install
 
 ADD . /app/
 
-CMD ["poetry", "run", "spotify2apple"]
+ENTRYPOINT ["poetry", "run", "spotify2apple"]

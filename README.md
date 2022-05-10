@@ -1,3 +1,9 @@
+# Usage
+Build:
+```bash
+docker build . --platform=linux/amd64 --tag 857256614217.dkr.ecr.eu-west-2.amazonaws.com/my-first-ecr-repo:0.1
+```
+
 # Goals
 Create a bot that accepts a link from spotify.
 1. If the link is to a song it returns a link to that song on apple music
